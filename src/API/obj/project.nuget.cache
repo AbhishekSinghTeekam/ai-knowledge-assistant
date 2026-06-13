@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "v1my+uEcmzE=",
+  "success": true,
+  "projectFilePath": "D:\\Personal\\AI-Knowledge-Assistant\\ai-knowledge-assistant\\src\\API\\AIKnowledgeAssistant.API.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Z004U7SE\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.10\\microsoft.aspnetcore.openapi.9.0.10.nupkg.sha512",
+    "C:\\Users\\Z004U7SE\\.nuget\\packages\\microsoft.openapi\\1.6.17\\microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}
