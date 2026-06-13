@@ -1,4 +1,29 @@
 services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: .
+      dockerfile: src/API/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=knowledge_db;Username=admin;Password=${POSTGRES_PASSWORD}
+    depends_on:
+      - postgres
+      - qdrant
+      - seq
+
   postgres:
     image: postgres:17
     environment:
@@ -12,6 +37,8 @@ services:
 
   qdrant:
     image: qdrant/qdrant:latest
+    environment:
+      QDRANT__TELEMETRY_DISABLED: "true"
     ports:
       - "6333:6333"
     volumes:
@@ -21,6 +48,7 @@ services:
     image: datalust/seq:latest
     environment:
       ACCEPT_EULA: "Y"
+      SEQ_FIRSTRUN_ADMINPASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5341:80"
     volumes:
