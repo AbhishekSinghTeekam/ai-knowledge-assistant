@@ -1,5 +1,6 @@
 services:
   frontend:
+    profiles: [frontend]
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -7,10 +8,9 @@ services:
       - "5173:80"
     environment:
       - VITE_API_URL=http://localhost:8080
-    depends_on:
-      - api
 
   api:
+    profiles: [api]
     build:
       context: .
       dockerfile: src/API/Dockerfile
