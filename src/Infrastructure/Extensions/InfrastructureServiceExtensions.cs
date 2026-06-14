@@ -24,6 +24,15 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
+        // Document text extractors — each registered individually so the factory can enumerate them.
+        services.AddSingleton<IDocumentExtractor, PdfExtractor>();
+        services.AddSingleton<IDocumentExtractor, TxtExtractor>();
+        services.AddSingleton<IDocumentExtractor, DocxExtractor>();
+        services.AddSingleton<IDocumentExtractorFactory, DocumentExtractorFactory>();
+
+        // Text chunking
+        services.AddSingleton<ITextChunkingService, TextChunkingService>();
+
         return services;
     }
 }
