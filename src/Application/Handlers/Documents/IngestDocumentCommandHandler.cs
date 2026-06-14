@@ -1,5 +1,6 @@
 using AIKnowledgeAssistant.Application.Commands.Documents;
 using AIKnowledgeAssistant.Application.DTOs.Documents;
+using AIKnowledgeAssistant.Application.Interfaces;
 using AIKnowledgeAssistant.Domain.Entities;
 using AIKnowledgeAssistant.Domain.Interfaces;
 using MediatR;
@@ -9,10 +10,17 @@ namespace AIKnowledgeAssistant.Application.Handlers.Documents;
 public sealed class IngestDocumentCommandHandler : IRequestHandler<IngestDocumentCommand, IngestDocumentResponse>
 {
     private readonly IDocumentRepository _documentRepository;
+    private readonly IDocumentExtractorFactory _extractorFactory;
+    private readonly ITextChunkingService _chunkingService;
 
-    public IngestDocumentCommandHandler(IDocumentRepository documentRepository)
+    public IngestDocumentCommandHandler(
+        IDocumentRepository documentRepository,
+        IDocumentExtractorFactory extractorFactory,
+        ITextChunkingService chunkingService)
     {
         _documentRepository = documentRepository;
+        _extractorFactory = extractorFactory;
+        _chunkingService = chunkingService;
     }
 
     public async Task<IngestDocumentResponse> Handle(IngestDocumentCommand request, CancellationToken cancellationToken)
@@ -27,8 +35,11 @@ public sealed class IngestDocumentCommandHandler : IRequestHandler<IngestDocumen
 
         document.MarkAsProcessing();
 
-        // TODO: Extract text content from FileContent based on ContentType
-        // TODO: Split extracted text into chunks
+        var extractor = _extractorFactory.GetExtractor(request.ContentType);
+        var rawText = await extractor.ExtractTextAsync(request.FileContent, cancellationToken);
+
+        var chunks = _chunkingService.Split(rawText);
+
         // TODO: Generate embeddings for each chunk via IEmbeddingService
         // TODO: Persist chunks to IDocumentRepository and vectors to IVectorRepository
         // TODO: Raise DocumentIngested domain event via document.MarkAsCompleted()
