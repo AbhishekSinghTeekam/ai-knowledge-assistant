@@ -1,7 +1,7 @@
 # AI Knowledge Assistant
 ### RAG Platform — Enterprise Project Documentation
 
-> **Stack:** ASP.NET Core 8 · Semantic Kernel · Ollama · Qdrant · React · PostgreSQL  
+> **Stack:** ASP.NET Core 9 · Semantic Kernel · Ollama · Qdrant · React · PostgreSQL  
 > **Patterns:** Clean Architecture · CQRS · MediatR · JWT · Docker  
 > **Cost:** 100% Free & Open Source · Fully Offline
 
@@ -109,14 +109,14 @@ Engineers chat with API docs, Architecture Decision Records (ADRs), and sprint r
 
 | Technology | Role |
 |---|---|
-| .NET 8 / ASP.NET Core 8 | Web API framework — minimal APIs + controllers |
-| C# 12 | Primary programming language |
+| .NET 9 / ASP.NET Core 9 | Web API framework — minimal APIs + controllers |
+| C# 13 | Primary programming language |
 | Semantic Kernel (Microsoft) | Orchestration framework for LLM, memory, and skills |
 | MediatR 12 | CQRS mediator — decouples commands/queries from handlers |
 | FluentValidation | Pipeline validation behaviours |
 | Serilog + Seq | Structured logging with a free local log viewer UI |
 | AutoMapper | Object-to-object mapping |
-| Entity Framework Core 8 | ORM for PostgreSQL (metadata / users only) |
+| Entity Framework Core 9 | ORM for PostgreSQL (metadata / users only) |
 | Dapper *(optional)* | Micro-ORM for read-side performance queries |
 
 ### AI / ML
@@ -194,10 +194,12 @@ Engineers chat with API docs, Architecture Decision Records (ADRs), and sprint r
 ```
 
 #### Domain Layer
+- **Common:** `BaseEntity`, `DomainEvent` — base classes for all entities and domain events
+- **Enums:** `DocumentStatus` (`Pending`, `Processing`, `Completed`, `Failed`), `MessageRole` (`User`, `Assistant`)
 - **Entities:** `Document`, `Chunk`, `Conversation`, `Message`, `User`, `ApplicationUser`
 - **Domain Events:** `DocumentIngested`, `ChunkEmbedded`
 - **Value Objects:** `ChunkId`, `EmbeddingVector`
-- Repository interfaces (no implementation in this layer)
+- **Repository Interfaces:** `IUserRepository`, `IDocumentRepository`, `IConversationRepository`, `IVectorRepository` — contracts only, no implementations
 
 #### Application Layer
 - **CQRS Commands:** `IngestDocumentCommand`, `SendMessageCommand`
@@ -262,7 +264,13 @@ Engineers chat with API docs, Architecture Decision Records (ADRs), and sprint r
 ```
 ai-knowledge-assistant/
 ├── src/
-│   ├── Domain/                  # Entities, domain events, interfaces
+│   ├── Domain/
+│   │   ├── Common/              # BaseEntity, DomainEvent base classes
+│   │   ├── Entities/            # Document, Chunk, Conversation, Message, User, ApplicationUser
+│   │   ├── Enums/               # DocumentStatus, MessageRole
+│   │   ├── Events/              # DocumentIngested, ChunkEmbedded
+│   │   ├── Interfaces/          # IUserRepository, IDocumentRepository, IConversationRepository, IVectorRepository
+│   │   └── ValueObjects/        # ChunkId, EmbeddingVector
 │   ├── Application/             # CQRS handlers, validators, DTOs
 │   ├── Infrastructure/          # EF Core, Qdrant adapter, Ollama adapter
 │   └── API/                     # ASP.NET Core project, controllers, middleware
