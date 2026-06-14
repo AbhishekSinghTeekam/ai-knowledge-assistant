@@ -3,7 +3,7 @@ services:
     profiles: [frontend]
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: ../docker/frontend.Dockerfile
     ports:
       - "5173:80"
     environment:
@@ -13,7 +13,7 @@ services:
     profiles: [api]
     build:
       context: .
-      dockerfile: src/API/Dockerfile
+      dockerfile: docker/api.Dockerfile
     ports:
       - "8080:8080"
     environment:
