@@ -72,6 +72,8 @@ RAG platforms are the **#1 enterprise AI investment in 2025–2026**. This proje
 | **AI / ML** | Ollama | Local LLM inference (Llama 3, Mistral) |
 | | nomic-embed-text | Text embeddings (768-dim) |
 | | Semantic Kernel | LLM + memory orchestration |
+| **Document Parsing** | PdfPig | PDF text extraction (free, no native deps) |
+| | DocumentFormat.OpenXml | DOCX text + table extraction |
 | **Databases** | PostgreSQL 17 | Relational metadata store |
 | | Qdrant | Vector database |
 | **Frontend** | React 18 + TypeScript + Vite | SPA |
@@ -79,6 +81,7 @@ RAG platforms are the **#1 enterprise AI investment in 2025–2026**. This proje
 | **DevOps** | Docker Compose | Multi-service orchestration |
 | | GitHub Actions | CI pipeline |
 | **Security** | JWT Bearer + BCrypt.Net | Auth + password hashing |
+| **Testing** | xUnit + FluentAssertions + NSubstitute | Unit test suite |
 
 ---
 
@@ -116,9 +119,18 @@ ai-knowledge-assistant/
 ├── src/
 │   ├── Domain/           # Entities, enums, domain events, value objects, repository interfaces
 │   ├── Application/      # CQRS commands/queries, handlers, DTOs, validators, behaviours
+│   │   └── Interfaces/   # IDocumentExtractor, IDocumentExtractorFactory, ITextChunkingService
 │   ├── Infrastructure/   # EF Core, migrations, repositories, Ollama/Qdrant services, JWT
+│   │   └── Services/     # PdfExtractor, TxtExtractor, DocxExtractor, DocumentExtractorFactory
+│   │                     # TextChunkingService, JwtTokenService, BcryptPasswordHasher
 │   └── API/              # Controllers, middleware, Program.cs
 ├── frontend/src/         # React + TypeScript (components, pages, hooks, api/)
+├── tests/
+│   └── AIKnowledgeAssistant.Tests/   # xUnit unit tests (93 tests, 0 failures)
+│       ├── Domain/Entities/          # Document, Chunk entity tests
+│       ├── Application/Validators/   # Register, Login, IngestDocument validator tests
+│       ├── Application/Handlers/     # IngestDocumentCommandHandler tests
+│       └── Infrastructure/Services/  # Extractor + factory + chunking tests
 ├── docker/               # api.Dockerfile, frontend.Dockerfile
 ├── docker-compose.yml    # postgres · qdrant · seq · api · frontend
 └── AIKnowledgeAssistant.sln
@@ -152,16 +164,22 @@ ai-knowledge-assistant/
 | Domain layer (entities, events, value objects, interfaces) | ✅ Done |
 | Application — Auth commands, handlers, DTOs, validators | ✅ Done |
 | Application — MediatR behaviours (logging, validation) | ✅ Done |
+| Application — `IDocumentExtractor`, `IDocumentExtractorFactory` interfaces | ✅ Done |
+| Application — `ITextChunkingService` interface + `ChunkingOptions` / `TextChunk` records | ✅ Done |
+| Application — `IngestDocumentCommandHandler` (extraction + chunking wired) | ✅ Done |
 | Infrastructure — `JwtTokenService`, `BcryptPasswordHasher` | ✅ Done |
 | Infrastructure — `AppDbContext`, EF configurations, migration | ✅ Done |
 | Infrastructure — `UserRepository`, `InfrastructureServiceExtensions` | ✅ Done |
+| Infrastructure — `PdfExtractor` (PdfPig), `TxtExtractor`, `DocxExtractor` (OpenXml) | ✅ Done |
+| Infrastructure — `DocumentExtractorFactory` (MIME-type resolver) | ✅ Done |
+| Infrastructure — `TextChunkingService` (recursive char splitter, 512 tokens / 50 overlap) | ✅ Done |
 | API — `AuthController`, `ValidationExceptionMiddleware`, `Program.cs` | ✅ Done |
 | Docker Compose (postgres, qdrant, seq, api, frontend) | ✅ Done |
 | Frontend — Vite scaffold, Axios `apiClient.ts` | ✅ Done |
-| Document ingestion (chunking, embedding, Qdrant storage) | 🔲 Pending |
-| RAG / Chat pipeline (search, prompt assembly, LLM generation) | 🔲 Pending |
-| Infrastructure — `OllamaEmbeddingService`, `OllamaLlmService`, Qdrant adapter | 🔲 Pending |
+| Tests — xUnit project (93 tests): domain, validators, handler, extractors, chunker | ✅ Done |
 | Infrastructure — `DocumentRepository`, `ConversationRepository` | 🔲 Pending |
 | API — `DocumentsController`, `ConversationsController`, SSE endpoint | 🔲 Pending |
+| Infrastructure — `OllamaEmbeddingService`, `OllamaLlmService`, Qdrant adapter | 🔲 Pending |
+| RAG / Chat pipeline (search, prompt assembly, LLM generation) | 🔲 Pending |
 | Frontend UI (Chat, DocumentList, UploadPanel, pages, hooks) | 🔲 Pending |
 | CI pipeline, dev compose, REST test files, architecture diagrams | 🔲 Pending |
