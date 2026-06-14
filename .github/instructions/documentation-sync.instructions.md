@@ -1,5 +1,5 @@
 ---
-description: "Use when creating, updating, or modifying any file, feature, component, entity, service, or configuration in this project. Enforces documentation-first awareness: consult Documentation.md before building, and keep it in sync when intentional changes diverge from it."
+description: "Use when creating, updating, or modifying any file, feature, component, entity, service, or configuration in this project. Enforces documentation-first awareness: consult README.md before building, and keep it in sync when intentional changes diverge from it."
 applyTo: "**"
 ---
 
@@ -7,7 +7,7 @@ applyTo: "**"
 
 ## Before Creating or Updating Anything
 
-Always read `Documentation.md` before implementing a new feature, entity, service, endpoint, component, or configuration change.
+Always read `README.md` before implementing a new feature, entity, service, endpoint, component, or configuration change.
 
 - Use it to understand intended design decisions, technology choices, and architecture patterns already planned for the project.
 - If the documentation describes what you are about to build, follow it — do not invent a different approach.
@@ -15,15 +15,15 @@ Always read `Documentation.md` before implementing a new feature, entity, servic
 
 ## Documentation Is Not an Absolute Source of Truth
 
-`Documentation.md` reflects *intent*, not *law*. You may intentionally deviate when:
+`README.md` reflects *intent*, not *law*. You may intentionally deviate when:
 
 - A better pattern or library has been chosen during implementation.
 - A planned feature is out of scope for the current task.
 - A technology listed in the docs has been replaced by a more suitable alternative.
 
-When you intentionally create something that differs from what Documentation.md describes, **update Documentation.md** to reflect the actual state of the project. Keep the doc honest.
+When you intentionally create something that differs from what README.md describes, **update README.md** to reflect the actual state of the project. Keep the doc honest.
 
-## What to Update in Documentation.md
+## What to Update in README.md
 
 | Change Made | What to Update |
 |---|---|
@@ -35,6 +35,6 @@ When you intentionally create something that differs from what Documentation.md 
 
 ## Workflow Summary
 
-1. **Read** `Documentation.md` for context on what is planned.
+1. **Read** `README.md` for context on what is planned.
 2. **Build** according to the documented design, or deviate with good reason.
-3. **Update** `Documentation.md` if the implementation differs from or extends what was documented.
+3. **Update** `README.md` if the implementation differs from or extends what was documented.
