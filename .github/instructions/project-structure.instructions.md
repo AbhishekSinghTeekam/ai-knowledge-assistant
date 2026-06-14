@@ -1,5 +1,5 @@
 ---
-description: "Use when creating, moving, or updating any file in this project. Enforces the folder structure defined in Documentation.md for the AI Knowledge Assistant RAG platform."
+description: "Use when creating, moving, or updating any file in this project. Enforces the folder structure defined in README.md for the AI Knowledge Assistant RAG platform."
 applyTo: "**"
 ---
 
