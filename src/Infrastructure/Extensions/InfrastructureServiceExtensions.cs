@@ -1,4 +1,8 @@
+using AIKnowledgeAssistant.Application.Interfaces;
+using AIKnowledgeAssistant.Domain.Interfaces;
 using AIKnowledgeAssistant.Infrastructure.Persistence;
+using AIKnowledgeAssistant.Infrastructure.Repositories;
+using AIKnowledgeAssistant.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +19,10 @@ public static class InfrastructureServiceExtensions
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection"),
                 npgsql => npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.GetName().Name)));
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
         return services;
     }

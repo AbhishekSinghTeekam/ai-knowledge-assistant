@@ -1,6 +1,59 @@
-@HostAddress = http://localhost:5087
+@HostAddress = http://localhost:8080
 
-GET {{HostAddress}}/weatherforecast/
-Accept: application/json
+### Register a new user
+POST {{HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Alice Smith",
+  "email": "alice@example.com",
+  "password": "Password1"
+}
+
+###
+
+### Login
+POST {{HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "Password1"
+}
+
+###
+
+### Register - validation failure (weak password)
+POST {{HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "",
+  "email": "not-an-email",
+  "password": "weak"
+}
+
+###
+
+### Register - duplicate email (409)
+POST {{HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Bob Jones",
+  "email": "alice@example.com",
+  "password": "Password1"
+}
+
+###
+
+### Login - wrong password (401)
+POST {{HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "WrongPass9"
+}
 
 ###
