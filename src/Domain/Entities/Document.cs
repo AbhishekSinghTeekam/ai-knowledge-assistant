@@ -34,6 +34,8 @@ public class Document : BaseEntity
         };
     }
 
+    public void AddChunk(Chunk chunk) => _chunks.Add(chunk);
+
     public void MarkAsProcessing() => Status = DocumentStatus.Processing;
 
     public void MarkAsCompleted()

@@ -12,15 +12,21 @@ public sealed class IngestDocumentCommandHandler : IRequestHandler<IngestDocumen
     private readonly IDocumentRepository _documentRepository;
     private readonly IDocumentExtractorFactory _extractorFactory;
     private readonly ITextChunkingService _chunkingService;
+    private readonly IEmbeddingService _embeddingService;
+    private readonly IVectorRepository _vectorRepository;
 
     public IngestDocumentCommandHandler(
         IDocumentRepository documentRepository,
         IDocumentExtractorFactory extractorFactory,
-        ITextChunkingService chunkingService)
+        ITextChunkingService chunkingService,
+        IEmbeddingService embeddingService,
+        IVectorRepository vectorRepository)
     {
         _documentRepository = documentRepository;
         _extractorFactory = extractorFactory;
         _chunkingService = chunkingService;
+        _embeddingService = embeddingService;
+        _vectorRepository = vectorRepository;
     }
 
     public async Task<IngestDocumentResponse> Handle(IngestDocumentCommand request, CancellationToken cancellationToken)
@@ -38,12 +44,40 @@ public sealed class IngestDocumentCommandHandler : IRequestHandler<IngestDocumen
         var extractor = _extractorFactory.GetExtractor(request.ContentType);
         var rawText = await extractor.ExtractTextAsync(request.FileContent, cancellationToken);
 
-        var chunks = _chunkingService.Split(rawText);
+        var textChunks = _chunkingService.Split(rawText);
 
-        // TODO: Generate embeddings for each chunk via IEmbeddingService
-        // TODO: Persist chunks to IDocumentRepository and vectors to IVectorRepository
-        // TODO: Raise DocumentIngested domain event via document.MarkAsCompleted()
+        // Generate embeddings for all chunks in a single batch call
+        var texts = textChunks.Select(c => c.Text).ToList();
+        var embeddings = await _embeddingService.EmbedBatchAsync(texts, cancellationToken);
 
+        await _vectorRepository.EnsureCollectionExistsAsync(
+            vectorDimensions: embeddings[0].Length,
+            cancellationToken: cancellationToken);
+
+        for (int i = 0; i < textChunks.Count; i++)
+        {
+            var chunk = Chunk.Create(
+                document.Id,
+                textChunks[i].Text,
+                textChunks[i].Index,
+                textChunks[i].TokenCount);
+
+            var vectorId = await _vectorRepository.UpsertAsync(
+                chunkId: chunk.Id,
+                embedding: embeddings[i],
+                metadata: new Dictionary<string, string>
+                {
+                    ["documentId"] = document.Id.ToString(),
+                    ["fileName"] = document.FileName,
+                    ["chunkIndex"] = chunk.ChunkIndex.ToString()
+                },
+                cancellationToken: cancellationToken);
+
+            chunk.SetVectorId(vectorId);
+            document.AddChunk(chunk);
+        }
+
+        document.MarkAsCompleted();
         await _documentRepository.UpdateAsync(document, cancellationToken);
 
         return new IngestDocumentResponse(

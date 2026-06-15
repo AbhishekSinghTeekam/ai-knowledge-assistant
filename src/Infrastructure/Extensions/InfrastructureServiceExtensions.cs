@@ -6,6 +6,7 @@ using AIKnowledgeAssistant.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace AIKnowledgeAssistant.Infrastructure.Extensions;
 
@@ -32,6 +33,14 @@ public static class InfrastructureServiceExtensions
 
         // Text chunking
         services.AddSingleton<ITextChunkingService, TextChunkingService>();
+
+        // Ollama — embeddings
+        services.Configure<OllamaOptions>(configuration.GetSection(OllamaOptions.SectionName));
+        services.AddHttpClient<IEmbeddingService, OllamaEmbeddingService>((sp, client) =>
+        {
+            var options = sp.GetRequiredService<IOptions<OllamaOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseUrl);
+        });
 
         return services;
     }
