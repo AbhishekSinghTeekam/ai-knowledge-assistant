@@ -1,7 +1,7 @@
 # AI Knowledge Assistant
 ### RAG Platform — Enterprise Project Documentation
 
-> **Stack:** ASP.NET Core 9 · Semantic Kernel · Ollama · Qdrant · React · PostgreSQL  
+> **Stack:** ASP.NET Core 8 · Ollama · Qdrant · React · PostgreSQL  
 > **Patterns:** Clean Architecture · CQRS · MediatR · JWT · Docker  
 > **Cost:** 100% Free & Open Source · Fully Offline
 
@@ -65,13 +65,12 @@ RAG platforms are the **#1 enterprise AI investment in 2025–2026**. This proje
 
 | Layer | Technology | Role |
 |---|---|---|
-| **Backend** | ASP.NET Core 9 + C# 13 | Web API |
+| **Backend** | ASP.NET Core 8 + C# 12 | Web API |
 | | MediatR 12 + FluentValidation | CQRS pipeline |
-| | EF Core 9 | ORM (PostgreSQL) |
+| | EF Core 8 | ORM (PostgreSQL) |
 | | Serilog + Seq | Structured logging |
 | **AI / ML** | Ollama | Local LLM inference (Llama 3, Mistral) |
 | | nomic-embed-text | Text embeddings (768-dim) |
-| | Semantic Kernel | LLM + memory orchestration |
 | **Document Parsing** | PdfPig | PDF text extraction (free, no native deps) |
 | | DocumentFormat.OpenXml | DOCX text + table extraction |
 | **Databases** | PostgreSQL 17 | Relational metadata store |
@@ -140,20 +139,21 @@ ai-knowledge-assistant/
 
 ## 6. API Endpoints
 
-| Method | Endpoint | Description | Auth |
-|---|---|---|---|
-| `POST` | `/api/auth/register` | Register new user | Public |
-| `POST` | `/api/auth/login` | Login → JWT token | Public |
-| `POST` | `/api/documents` | Upload document | Required |
-| `GET` | `/api/documents` | List documents | Required |
-| `GET` | `/api/documents/{id}/status` | Ingestion status | Required |
-| `DELETE` | `/api/documents/{id}` | Delete document + vectors | Required |
-| `POST` | `/api/conversations` | Create conversation | Required |
-| `GET` | `/api/conversations` | List conversations | Required |
-| `POST` | `/api/conversations/{id}/messages` | Send message (RAG response) | Required |
-| `GET` | `/api/conversations/{id}/stream` | SSE token stream | Required |
-| `GET` | `/api/conversations/{id}/messages` | Message history | Required |
-| `GET` | `/api/health` | Health check | Public |
+| Method | Endpoint | Description | Auth | Status |
+|---|---|---|---|---|
+| `POST` | `/api/auth/register` | Register new user | Public | ✅ |
+| `POST` | `/api/auth/login` | Login → JWT token | Public | ✅ |
+| `POST` | `/api/documents/ingest` | Upload & ingest document (PDF, DOCX, TXT) | Required | ✅ |
+| `GET` | `/api/documents/search?q=...&topK=5` | Semantic similarity search over chunks | Required | ✅ |
+| `GET` | `/api/documents` | List documents | Required | 🔲 |
+| `GET` | `/api/documents/{id}/status` | Ingestion status | Required | 🔲 |
+| `DELETE` | `/api/documents/{id}` | Delete document + vectors | Required | 🔲 |
+| `POST` | `/api/conversations` | Create conversation | Required | 🔲 |
+| `GET` | `/api/conversations` | List conversations | Required | 🔲 |
+| `POST` | `/api/conversations/{id}/messages` | Send message (RAG response) | Required | 🔲 |
+| `GET` | `/api/conversations/{id}/stream` | SSE token stream | Required | 🔲 |
+| `GET` | `/api/conversations/{id}/messages` | Message history | Required | 🔲 |
+| `GET` | `/api/health` | Health check | Public | 🔲 |
 
 ---
 
@@ -166,20 +166,27 @@ ai-knowledge-assistant/
 | Application — MediatR behaviours (logging, validation) | ✅ Done |
 | Application — `IDocumentExtractor`, `IDocumentExtractorFactory` interfaces | ✅ Done |
 | Application — `ITextChunkingService` interface + `ChunkingOptions` / `TextChunk` records | ✅ Done |
-| Application — `IngestDocumentCommandHandler` (extraction + chunking wired) | ✅ Done |
+| Application — `IngestDocumentCommandHandler` (extract → chunk → embed → store) | ✅ Done |
+| Application — `SearchChunksQuery` + `SearchChunksQueryHandler` (semantic search) | ✅ Done |
+| Application — `SearchChunksResponse`, `ChunkSearchResult` DTOs | ✅ Done |
 | Infrastructure — `JwtTokenService`, `BcryptPasswordHasher` | ✅ Done |
 | Infrastructure — `AppDbContext`, EF configurations, migration | ✅ Done |
-| Infrastructure — `UserRepository`, `InfrastructureServiceExtensions` | ✅ Done |
+| Infrastructure — `UserRepository`, `DocumentRepository`, `ConversationRepository` | ✅ Done |
 | Infrastructure — `PdfExtractor` (PdfPig), `TxtExtractor`, `DocxExtractor` (OpenXml) | ✅ Done |
 | Infrastructure — `DocumentExtractorFactory` (MIME-type resolver) | ✅ Done |
 | Infrastructure — `TextChunkingService` (recursive char splitter, 512 tokens / 50 overlap) | ✅ Done |
+| Infrastructure — `OllamaEmbeddingService` (batch embedding via `nomic-embed-text`) | ✅ Done |
+| Infrastructure — `QdrantVectorRepository` (upsert, search, delete, collection init) | ✅ Done |
 | API — `AuthController`, `ValidationExceptionMiddleware`, `Program.cs` | ✅ Done |
-| Docker Compose (postgres, qdrant, seq, api, frontend) | ✅ Done |
+| API — `DocumentsController` — `POST /api/documents/ingest` | ✅ Done |
+| API — `DocumentsController` — `GET /api/documents/search` | ✅ Done |
+| Docker Compose (postgres, qdrant, seq, api, frontend profiles) | ✅ Done |
+| REST test file (`.http/AIKnowledgeAssistant.API.http`) | ✅ Done |
 | Frontend — Vite scaffold, Axios `apiClient.ts` | ✅ Done |
-| Tests — xUnit project (93 tests): domain, validators, handler, extractors, chunker | ✅ Done |
-| Infrastructure — `DocumentRepository`, `ConversationRepository` | 🔲 Pending |
-| API — `DocumentsController`, `ConversationsController`, SSE endpoint | 🔲 Pending |
-| Infrastructure — `OllamaEmbeddingService`, `OllamaLlmService`, Qdrant adapter | 🔲 Pending |
-| RAG / Chat pipeline (search, prompt assembly, LLM generation) | 🔲 Pending |
-| Frontend UI (Chat, DocumentList, UploadPanel, pages, hooks) | 🔲 Pending |
-| CI pipeline, dev compose, REST test files, architecture diagrams | 🔲 Pending |
+| Tests — xUnit project (domain, validators, handler, extractors, chunker) | ✅ Done |
+| API — `ConversationsController` (create, list, messages, SSE stream) | 🔲 Pending |
+| Infrastructure — `OllamaLlmService` (chat generation / streaming) | 🔲 Pending |
+| Application — `SendMessageCommand` handler (RAG prompt assembly + generation) | 🔲 Pending |
+| Application — `GetConversationsQuery` handler | 🔲 Pending |
+| Frontend UI — Chat, DocumentList, UploadPanel, Login/Register pages, hooks | 🔲 Pending |
+| CI pipeline (GitHub Actions), architecture diagrams | 🔲 Pending |
