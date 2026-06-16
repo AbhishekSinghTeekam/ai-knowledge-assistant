@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Qdrant.Client;
 
 namespace AIKnowledgeAssistant.Infrastructure.Extensions;
 
@@ -22,6 +23,8 @@ public static class InfrastructureServiceExtensions
                 npgsql => npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.GetName().Name)));
 
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IDocumentRepository, DocumentRepository>();
+        services.AddScoped<IConversationRepository, ConversationRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
@@ -41,6 +44,15 @@ public static class InfrastructureServiceExtensions
             var options = sp.GetRequiredService<IOptions<OllamaOptions>>().Value;
             client.BaseAddress = new Uri(options.BaseUrl);
         });
+
+        // Qdrant — vector store
+        services.Configure<QdrantOptions>(configuration.GetSection(QdrantOptions.SectionName));
+        services.AddSingleton<QdrantClient>(sp =>
+        {
+            var opts = sp.GetRequiredService<IOptions<QdrantOptions>>().Value;
+            return new QdrantClient(opts.Host, opts.Port, opts.Https, opts.ApiKey);
+        });
+        services.AddScoped<IVectorRepository, QdrantVectorRepository>();
 
         return services;
     }

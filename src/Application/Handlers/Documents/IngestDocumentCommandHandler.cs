@@ -31,13 +31,15 @@ public sealed class IngestDocumentCommandHandler : IRequestHandler<IngestDocumen
 
     public async Task<IngestDocumentResponse> Handle(IngestDocumentCommand request, CancellationToken cancellationToken)
     {
+        // Build the entire document+chunks graph in memory before touching the DB.
+        // This ensures a single SaveChanges call where EF marks every entity as Added,
+        // avoiding the two-save pattern that causes EF to emit UPDATE for new chunks
+        // (because client-generated Guid keys look "existing" to EF's change tracker).
         var document = Document.Create(
             request.FileName,
             request.ContentType,
             request.FileSizeBytes,
             request.UserId);
-
-        await _documentRepository.AddAsync(document, cancellationToken);
 
         document.MarkAsProcessing();
 
@@ -46,7 +48,6 @@ public sealed class IngestDocumentCommandHandler : IRequestHandler<IngestDocumen
 
         var textChunks = _chunkingService.Split(rawText);
 
-        // Generate embeddings for all chunks in a single batch call
         var texts = textChunks.Select(c => c.Text).ToList();
         var embeddings = await _embeddingService.EmbedBatchAsync(texts, cancellationToken);
 
@@ -67,9 +68,10 @@ public sealed class IngestDocumentCommandHandler : IRequestHandler<IngestDocumen
                 embedding: embeddings[i],
                 metadata: new Dictionary<string, string>
                 {
-                    ["documentId"] = document.Id.ToString(),
+                    ["document_id"] = document.Id.ToString(),
                     ["fileName"] = document.FileName,
-                    ["chunkIndex"] = chunk.ChunkIndex.ToString()
+                    ["chunkIndex"] = chunk.ChunkIndex.ToString(),
+                    ["content"] = chunk.Content
                 },
                 cancellationToken: cancellationToken);
 
@@ -78,7 +80,9 @@ public sealed class IngestDocumentCommandHandler : IRequestHandler<IngestDocumen
         }
 
         document.MarkAsCompleted();
-        await _documentRepository.UpdateAsync(document, cancellationToken);
+
+        // Single DB round-trip: EF marks document + all chunks as Added → all INSERTs.
+        await _documentRepository.AddAsync(document, cancellationToken);
 
         return new IngestDocumentResponse(
             document.Id,

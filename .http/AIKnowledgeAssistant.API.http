@@ -1,13 +1,16 @@
-@HostAddress = http://localhost:8080
+@HostAddress = http://localhost:5087
+
+# After login, paste the returned JWT here:
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0ZTYyMjMyOC0xNjI0LTQyMDQtODc1MC1iNmQ4NWJhNTE5MjQiLCJlbWFpbCI6ImFiaGlzaGVrLnNpbmdoQGV4YW1wbGUuY29tIiwibmFtZSI6IkFiaGlzaGVrIFNpbmdoIiwianRpIjoiNjQxOGExNzQtOGY1NS00NTMxLTg1YmMtM2RhMDQzNTUzZjM2IiwiZXhwIjoxNzgxNjMwOTUzLCJpc3MiOiJUYXNrUG9vbC5BcGkiLCJhdWQiOiJUYXNrUG9vbC5DbGllbnQifQ.FlByYzC0hWCVy_na4NDWMhcyFs3MRH7W0Km4MSMoOXw
 
 ### Register a new user
 POST {{HostAddress}}/api/auth/register
 Content-Type: application/json
 
 {
-  "name": "Alice Smith",
-  "email": "alice@example.com",
-  "password": "Password1"
+  "name": "Abhishek Singh",
+  "email": "abhishek.singh@example.com",
+  "password": "Password2"
 }
 
 ###
@@ -17,8 +20,8 @@ POST {{HostAddress}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "alice@example.com",
-  "password": "Password1"
+  "email": "abhishek.singh@example.com",
+  "password": "Password2"
 }
 
 ###
@@ -55,5 +58,101 @@ Content-Type: application/json
   "email": "alice@example.com",
   "password": "WrongPass9"
 }
+
+###
+
+# ── Documents ────────────────────────────────────────────────────────────────
+# Replace the path below with the absolute path to any PDF on your machine.
+# VS Code REST Client supports multipart/form-data with < @path syntax.
+
+### Ingest a PDF (happy path) — requires a valid JWT in @token above
+POST {{HostAddress}}/api/documents/ingest
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="sample.pdf"
+Content-Type: application/pdf
+
+< ./sample.pdf
+--boundary--
+
+###
+
+### Ingest a plain-text file
+POST {{HostAddress}}/api/documents/ingest
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="notes.txt"
+Content-Type: text/plain
+
+< ./notes.txt
+--boundary--
+
+###
+
+### Ingest — missing auth (expects 401)
+POST {{HostAddress}}/api/documents/ingest
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="sample.pdf"
+Content-Type: application/pdf
+
+< ./sample.pdf
+--boundary--
+
+###
+
+### Ingest — unsupported file type (expects 400)
+POST {{HostAddress}}/api/documents/ingest
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="image.png"
+Content-Type: image/png
+
+< ./image.png
+--boundary--
+
+###
+
+# ── Semantic Search ───────────────────────────────────────────────────────────
+
+### Search — RAG pipeline overview (top 5 most relevant chunks)
+GET {{HostAddress}}/api/documents/search?q=What is the RAG pipeline flow?&topK=5
+Authorization: Bearer {{token}}
+
+###
+
+### Search — technology stack
+GET {{HostAddress}}/api/documents/search?q=What technologies are used in this project?&topK=3
+Authorization: Bearer {{token}}
+
+###
+
+### Search — authentication and security
+GET {{HostAddress}}/api/documents/search?q=How does JWT authentication work?&topK=3
+Authorization: Bearer {{token}}
+
+###
+
+### Search — missing auth (expects 401)
+GET {{HostAddress}}/api/documents/search?q=RAG pipeline
+
+###
+
+### Search — missing query param (expects 400)
+GET {{HostAddress}}/api/documents/search
+Authorization: Bearer {{token}}
+
+###
+
+### Search — topK out of range (expects 400)
+GET {{HostAddress}}/api/documents/search?q=architecture&topK=50
+Authorization: Bearer {{token}}
 
 ###

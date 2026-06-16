@@ -41,7 +41,8 @@ services:
     environment:
       QDRANT__TELEMETRY_DISABLED: "true"
     ports:
-      - "6333:6333"
+      - "6333:6333"  # REST / dashboard
+      - "6334:6334"  # gRPC (.NET SDK)
     volumes:
       - qdrant_data:/qdrant/storage
 
