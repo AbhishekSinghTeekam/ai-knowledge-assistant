@@ -98,4 +98,55 @@ public sealed class DocumentsController : ControllerBase
 
         return Ok(response);
     }
+
+    /// <summary>Lists all documents ingested by the authenticated user.</summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(DocumentListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var parsedUserId))
+            return Unauthorized();
+
+        var response = await _mediator.Send(new GetDocumentsQuery(parsedUserId), cancellationToken);
+        return Ok(response);
+    }
+
+    /// <summary>Returns the ingestion status of a specific document.</summary>
+    [HttpGet("{id:guid}/status")]
+    [ProducesResponseType(typeof(DocumentStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetStatus(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var parsedUserId))
+            return Unauthorized();
+
+        var response = await _mediator.Send(
+            new GetDocumentStatusQuery(id, parsedUserId),
+            cancellationToken);
+
+        return Ok(response);
+    }
+
+    /// <summary>Deletes a document and all its vectors from Qdrant.</summary>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var parsedUserId))
+            return Unauthorized();
+
+        await _mediator.Send(new DeleteDocumentCommand(id, parsedUserId), cancellationToken);
+        return NoContent();
+    }
 }

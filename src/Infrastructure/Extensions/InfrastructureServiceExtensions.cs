@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.Qdrant;
 using Qdrant.Client;
 
 namespace AIKnowledgeAssistant.Infrastructure.Extensions;
@@ -44,6 +46,14 @@ public static class InfrastructureServiceExtensions
             var options = sp.GetRequiredService<IOptions<OllamaOptions>>().Value;
             client.BaseAddress = new Uri(options.BaseUrl);
         });
+        services.AddHttpClient<ITextGenerationService, OllamaLlmService>((sp, client) =>
+        {
+            var options = sp.GetRequiredService<IOptions<OllamaOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseUrl);
+        });
+
+        // Semantic Kernel core services.
+        services.AddKernel();
 
         // Qdrant — vector store
         services.Configure<QdrantOptions>(configuration.GetSection(QdrantOptions.SectionName));
@@ -52,6 +62,13 @@ public static class InfrastructureServiceExtensions
             var opts = sp.GetRequiredService<IOptions<QdrantOptions>>().Value;
             return new QdrantClient(opts.Host, opts.Port, opts.Https, opts.ApiKey);
         });
+
+        // Semantic Kernel memory connector backed by Qdrant vector store.
+        services.AddQdrantVectorStore(
+            sp => sp.GetRequiredService<QdrantClient>(),
+            _ => new QdrantVectorStoreOptions(),
+            ServiceLifetime.Singleton);
+
         services.AddScoped<IVectorRepository, QdrantVectorRepository>();
 
         return services;
