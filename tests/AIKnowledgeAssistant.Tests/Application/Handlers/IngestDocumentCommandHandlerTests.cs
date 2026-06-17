@@ -21,9 +21,11 @@ public sealed class IngestDocumentCommandHandlerTests
     private readonly IDocumentExtractorFactory _extractorFactory = Substitute.For<IDocumentExtractorFactory>();
     private readonly IDocumentExtractor _extractor = Substitute.For<IDocumentExtractor>();
     private readonly ITextChunkingService _chunkingService = Substitute.For<ITextChunkingService>();
+    private readonly IEmbeddingService _embeddingService = Substitute.For<IEmbeddingService>();
+    private readonly IVectorRepository _vectorRepository = Substitute.For<IVectorRepository>();
 
     private IngestDocumentCommandHandler BuildHandler() =>
-        new(_documentRepository, _extractorFactory, _chunkingService);
+        new(_documentRepository, _extractorFactory, _chunkingService, _embeddingService, _vectorRepository);
 
     // -------------------------------------------------------------------------
     // Default arrangement
@@ -36,6 +38,14 @@ public sealed class IngestDocumentCommandHandlerTests
             .Returns(Task.FromResult(extractedText));
         _chunkingService.Split(Arg.Any<string>(), Arg.Any<ChunkingOptions?>())
             .Returns([new TextChunk("Extracted document text.", 4, 0)]);
+        _embeddingService.EmbedBatchAsync(Arg.Any<IReadOnlyList<string>>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<float[]>>([new float[] { 0.1f, 0.2f, 0.3f }]));
+        _vectorRepository.UpsertAsync(
+                Arg.Any<Guid>(),
+                Arg.Any<float[]>(),
+                Arg.Any<Dictionary<string, string>>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(Guid.NewGuid().ToString()));
     }
 
     // -------------------------------------------------------------------------
@@ -74,7 +84,7 @@ public sealed class IngestDocumentCommandHandlerTests
 
         await handler.Handle(ValidCommand(), CancellationToken.None);
 
-        await _documentRepository.Received(1).UpdateAsync(Arg.Any<Document>(), Arg.Any<CancellationToken>());
+        await _documentRepository.DidNotReceive().UpdateAsync(Arg.Any<Document>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -116,15 +126,13 @@ public sealed class IngestDocumentCommandHandlerTests
     [Fact]
     public async Task Handle_ValidCommand_ResponseStatus_IsProcessing_Or_Pending()
     {
-        // The handler marks as Processing but does not yet mark as Completed (embeddings are TODO).
+        // The handler marks as Completed when ingest + embedding + vector upsert finish.
         ArrangeDefaults();
         var handler = BuildHandler();
 
         var response = await handler.Handle(ValidCommand(), CancellationToken.None);
 
-        // Accept either Processing (handler sets it) or Pending (if state is captured early).
-        var acceptableStatuses = new[] { DocumentStatus.Processing.ToString(), DocumentStatus.Pending.ToString() };
-        response.Status.Should().BeOneOf(acceptableStatuses);
+        response.Status.Should().Be(DocumentStatus.Completed.ToString());
     }
 
     // -------------------------------------------------------------------------

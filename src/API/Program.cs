@@ -115,6 +115,10 @@ try
     app.UseSerilogRequestLogging();
     app.UseCors("Frontend");
     app.UseMiddleware<ExceptionMiddleware>();
+
+    app.MapGet("/api/health", () => Results.Ok(new { status = "healthy", utc = DateTime.UtcNow }))
+       .WithTags("Health")
+       .AllowAnonymous();
     app.UseHttpsRedirection();
     app.UseAuthentication();
     app.UseAuthorization();

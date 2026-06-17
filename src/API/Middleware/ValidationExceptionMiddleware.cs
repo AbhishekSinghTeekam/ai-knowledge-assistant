@@ -36,9 +36,19 @@ public sealed class ExceptionMiddleware
                         g => g.Select(e => e.ErrorMessage).ToArray())
             });
         }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning("Not found for {Path}: {Message}", context.Request.Path, ex.Message);
+
+            await WriteJsonAsync(context, StatusCodes.Status404NotFound, new
+            {
+                type = "NotFound",
+                message = ex.Message
+            });
+        }
         catch (InvalidOperationException ex)
         {
-            _logger.LogWarning(ex, "Conflict error for {Path}", context.Request.Path);
+            _logger.LogWarning(ex, "Conflict/operational error for {Path}", context.Request.Path);
 
             await WriteJsonAsync(context, StatusCodes.Status409Conflict, new
             {

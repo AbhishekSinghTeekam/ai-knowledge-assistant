@@ -68,6 +68,7 @@ RAG platforms are the **#1 enterprise AI investment in 2025–2026**. This proje
 | **Backend** | ASP.NET Core 8 + C# 12 | Web API |
 | | MediatR 12 + FluentValidation | CQRS pipeline |
 | | EF Core 8 | ORM (PostgreSQL) |
+| | Semantic Kernel | AI orchestration + vector memory integration |
 | | Serilog + Seq | Structured logging |
 | **AI / ML** | Ollama | Local LLM inference (Llama 3, Mistral) |
 | | nomic-embed-text | Text embeddings (768-dim) |
@@ -151,9 +152,15 @@ ai-knowledge-assistant/
 | `POST` | `/api/conversations` | Create conversation | Required | 🔲 |
 | `GET` | `/api/conversations` | List conversations | Required | 🔲 |
 | `POST` | `/api/conversations/{id}/messages` | Send message (RAG response) | Required | 🔲 |
-| `GET` | `/api/conversations/{id}/stream` | SSE token stream | Required | 🔲 |
-| `GET` | `/api/conversations/{id}/messages` | Message history | Required | 🔲 |
-| `GET` | `/api/health` | Health check | Public | 🔲 |
+| `POST` | `/api/conversations` | Create conversation | Required | ✅ |
+| `GET` | `/api/conversations` | List conversations | Required | ✅ |
+| `POST` | `/api/conversations/{id}/messages` | Send message (RAG response) | Required | ✅ |
+| `GET` | `/api/conversations/{id}/messages` | Message history | Required | ✅ |
+| `GET` | `/api/chat/{id}/stream` | SSE token stream | Required | ✅ |
+| `GET` | `/api/documents` | List documents | Required | ✅ |
+| `GET` | `/api/documents/{id}/status` | Ingestion status | Required | ✅ |
+| `DELETE` | `/api/documents/{id}` | Delete document + vectors | Required | ✅ |
+| `GET` | `/api/health` | Health check | Public | ✅ |
 
 ---
 
@@ -184,9 +191,14 @@ ai-knowledge-assistant/
 | REST test file (`.http/AIKnowledgeAssistant.API.http`) | ✅ Done |
 | Frontend — Vite scaffold, Axios `apiClient.ts` | ✅ Done |
 | Tests — xUnit project (domain, validators, handler, extractors, chunker) | ✅ Done |
-| API — `ConversationsController` (create, list, messages, SSE stream) | 🔲 Pending |
-| Infrastructure — `OllamaLlmService` (chat generation / streaming) | 🔲 Pending |
-| Application — `SendMessageCommand` handler (RAG prompt assembly + generation) | 🔲 Pending |
-| Application — `GetConversationsQuery` handler | 🔲 Pending |
+| Infrastructure — `OllamaLlmService` (`ITextGenerationService`) + Semantic Kernel DI + Qdrant memory connector | ✅ Done |
+| Application — `SendMessageCommand` handler (RAG prompt assembly + generation) | ✅ Done |
+| Application — `CreateConversationCommand` + `GetConversationsQuery` + `GetConversationMessagesQuery` handlers | ✅ Done |
+| Application — `GetDocumentsQuery`, `GetDocumentStatusQuery`, `DeleteDocumentCommand` handlers | ✅ Done |
+| API — `ConversationsController` (`POST`, `GET list`, `GET messages`, `POST message`) | ✅ Done |
+| API — `DocumentsController` (`GET list`, `GET status`, `DELETE`) | ✅ Done |
+| API — `GET /api/health` endpoint | ✅ Done |
+| API — `ExceptionMiddleware` — `KeyNotFoundException` → 404 fix | ✅ Done |
+| Tests — new handler tests (108 tests total, 0 failures) | ✅ Done |
 | Frontend UI — Chat, DocumentList, UploadPanel, Login/Register pages, hooks | 🔲 Pending |
 | CI pipeline (GitHub Actions), architecture diagrams | 🔲 Pending |

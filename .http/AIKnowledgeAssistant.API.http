@@ -1,7 +1,7 @@
 @HostAddress = http://localhost:5087
 
 # After login, paste the returned JWT here:
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0ZTYyMjMyOC0xNjI0LTQyMDQtODc1MC1iNmQ4NWJhNTE5MjQiLCJlbWFpbCI6ImFiaGlzaGVrLnNpbmdoQGV4YW1wbGUuY29tIiwibmFtZSI6IkFiaGlzaGVrIFNpbmdoIiwianRpIjoiNjQxOGExNzQtOGY1NS00NTMxLTg1YmMtM2RhMDQzNTUzZjM2IiwiZXhwIjoxNzgxNjMwOTUzLCJpc3MiOiJUYXNrUG9vbC5BcGkiLCJhdWQiOiJUYXNrUG9vbC5DbGllbnQifQ.FlByYzC0hWCVy_na4NDWMhcyFs3MRH7W0Km4MSMoOXw
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzZmJiNTlhZi1iMTljLTQ5NmEtYjg1Zi0zODk4YjU2NTI2NGEiLCJlbWFpbCI6ImFiaGlzaGVrLnNpbmdoQGV4YW1wbGUuY29tIiwibmFtZSI6IkFiaGlzaGVrIFNpbmdoIiwianRpIjoiNTJjMjE5NTgtNTNkMy00NmNkLWIxNDgtMmI2YzE1YTQ5YTRlIiwiZXhwIjoxNzgxNzE4MDQwLCJpc3MiOiJUYXNrUG9vbC5BcGkiLCJhdWQiOiJUYXNrUG9vbC5DbGllbnQifQ.M2fVFcmX-L3_xSGauczbOFXikWIVVxBmud_Hf_5WGrU
 
 ### Register a new user
 POST {{HostAddress}}/api/auth/register
@@ -153,6 +153,185 @@ Authorization: Bearer {{token}}
 
 ### Search — topK out of range (expects 400)
 GET {{HostAddress}}/api/documents/search?q=architecture&topK=50
+Authorization: Bearer {{token}}
+
+###
+
+# ── Health ────────────────────────────────────────────────────────────────────
+
+### Health check (public — expects 200)
+GET {{HostAddress}}/api/health
+
+###
+
+# ── Documents — List / Status / Delete ───────────────────────────────────────
+
+### List all documents for the authenticated user
+GET {{HostAddress}}/api/documents
+Authorization: Bearer {{token}}
+
+###
+
+### Get ingestion status of a specific document (replace with real id)
+@documentId = 00000000-0000-0000-0000-000000000000
+
+GET {{HostAddress}}/api/documents/{{documentId}}/status
+Authorization: Bearer {{token}}
+
+###
+
+### Delete a document + its Qdrant vectors (expects 204)
+DELETE {{HostAddress}}/api/documents/{{documentId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Delete — missing auth (expects 401)
+DELETE {{HostAddress}}/api/documents/{{documentId}}
+
+###
+
+### Delete — unknown id (expects 404)
+DELETE {{HostAddress}}/api/documents/00000000-0000-0000-0000-000000000001
+Authorization: Bearer {{token}}
+
+###
+
+# ── Conversations ─────────────────────────────────────────────────────────────
+
+### Create a new conversation (title is optional)
+POST {{HostAddress}}/api/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "RAG pipeline questions"
+}
+
+###
+
+### Create conversation — empty title (auto-generated)
+POST {{HostAddress}}/api/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+###
+
+### List all conversations for the authenticated user
+GET {{HostAddress}}/api/conversations
+Authorization: Bearer {{token}}
+
+###
+
+### List conversations — missing auth (expects 401)
+GET {{HostAddress}}/api/conversations
+
+###
+
+# ── Conversations — Messages ──────────────────────────────────────────────────
+# After creating a conversation above, paste the returned id here:
+@conversationId = 00000000-0000-0000-0000-000000000000
+
+### Get message history for a conversation
+GET {{HostAddress}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+
+###
+
+### Get messages — unknown id (expects 404)
+GET {{HostAddress}}/api/conversations/00000000-0000-0000-0000-000000000001/messages
+Authorization: Bearer {{token}}
+
+###
+
+### Send a message — non-streaming RAG response (full JSON)
+POST {{HostAddress}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "question": "What is the RAG pipeline flow?",
+  "topK": 5
+}
+
+###
+
+### Send message — missing question (expects 400)
+POST {{HostAddress}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "question": "",
+  "topK": 5
+}
+
+###
+
+### Send message — missing auth (expects 401)
+POST {{HostAddress}}/api/conversations/{{conversationId}}/messages
+Content-Type: application/json
+
+{
+  "question": "test"
+}
+
+###
+
+### Send message — unknown conversation (expects 404)
+POST {{HostAddress}}/api/conversations/00000000-0000-0000-0000-000000000001/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "question": "test"
+}
+
+###
+
+# ── Chat / SSE Streaming ─────────────────────────────────────────────────────
+# The SSE stream endpoint is best tested with curl or a browser EventSource —
+# the VS Code REST Client does NOT render SSE events progressively, but it WILL
+# receive and display the full chunked response once the stream finishes.
+# Recommended curl command:
+#   curl -N -H "Authorization: Bearer <token>" \
+#        "http://localhost:5087/api/chat/<conversationId>/stream?q=What+is+the+RAG+pipeline%3F"
+
+### SSE stream — happy path
+GET {{HostAddress}}/api/chat/{{conversationId}}/stream?q=What is the RAG pipeline flow?&topK=5
+Authorization: Bearer {{token}}
+Accept: text/event-stream
+
+###
+
+### SSE stream — different question
+GET {{HostAddress}}/api/chat/{{conversationId}}/stream?q=How does JWT authentication work?&topK=3
+Authorization: Bearer {{token}}
+Accept: text/event-stream
+
+###
+
+### SSE stream — missing auth (expects 401)
+GET {{HostAddress}}/api/chat/{{conversationId}}/stream?q=test
+
+###
+
+### SSE stream — missing query param (expects 400)
+GET {{HostAddress}}/api/chat/{{conversationId}}/stream
+Authorization: Bearer {{token}}
+
+###
+
+### SSE stream — topK out of range (expects 400)
+GET {{HostAddress}}/api/chat/{{conversationId}}/stream?q=architecture&topK=50
+Authorization: Bearer {{token}}
+
+###
+
+### SSE stream — unknown conversation id (expects 404)
+GET {{HostAddress}}/api/chat/00000000-0000-0000-0000-000000000001/stream?q=test
 Authorization: Bearer {{token}}
 
 ###
