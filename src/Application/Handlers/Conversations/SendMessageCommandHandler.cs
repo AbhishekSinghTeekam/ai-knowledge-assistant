@@ -95,7 +95,7 @@ Keep the answer concise, accurate, and professional.
             if (!string.IsNullOrWhiteSpace(skAnswer))
                 return skAnswer.Trim();
         }
-        catch (InvalidOperationException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             // Fallback to the direct Ollama text-generation service when no SK chat connector is configured.
         }
