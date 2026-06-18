@@ -200,5 +200,7 @@ ai-knowledge-assistant/
 | API — `GET /api/health` endpoint | ✅ Done |
 | API — `ExceptionMiddleware` — `KeyNotFoundException` → 404 fix | ✅ Done |
 | Tests — new handler tests (108 tests total, 0 failures) | ✅ Done |
-| Frontend UI — Chat, DocumentList, UploadPanel, Login/Register pages, hooks | 🔲 Pending |
+| Frontend UI — Login/Register pages, auth hook, in-memory JWT + Axios interceptor | ✅ Done |
+| Frontend UI — Chat, DocumentList, UploadPanel | ✅ Done |
+| Frontend UI — TanStack Query data fetching/mutations for conversations/documents | ✅ Done |
 | CI pipeline (GitHub Actions), architecture diagrams | 🔲 Pending |
